@@ -22,6 +22,14 @@ dist/
 build/
 .vite/
 
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+
+
 # Database
 *.db
 *.sqlite
