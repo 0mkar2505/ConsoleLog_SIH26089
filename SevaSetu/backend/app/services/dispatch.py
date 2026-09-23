@@ -163,6 +163,34 @@ def assign_worker_to_request(request_doc: Dict[str, Any]) -> Optional[Dict[str, 
         upsert=True
     )
 
+    # If low-digital worker (SMS/voice), trigger SMS dispatch simulation
+    if comm_method in ["sms", "voice"]:
+        try:
+            from app.services.sms_gateway import generate_job_sms_text, send_dispatch_sms
+            w_u = users_col.find_one({"_id": selected_worker.get("user_id")})
+            w_phone = w_u.get("phone", "+919844444403") if w_u else "+919844444403"
+            sms_body = generate_job_sms_text(
+                booking_id=booking_id_str,
+                service_name=service_doc.get("name", "Service") if service_doc else "Service",
+                customer_name=request_doc.get("customer_name", "Customer"),
+                customer_phone=request_doc.get("customer_phone", "+919811111111"),
+                address=request_doc.get("address", ""),
+                landmark=request_doc.get("landmark"),
+                directions=request_doc.get("directions"),
+                scheduled_time=request_doc.get("preferred_date"),
+                problem_description=request_doc.get("problem_description", "Service requested"),
+                estimated_price=base_price,
+            )
+            send_dispatch_sms(
+                worker_phone=w_phone,
+                worker_id=worker_id_str,
+                request_id=request_id_str,
+                booking_id=booking_id_str,
+                message_body=sms_body,
+            )
+        except Exception as e:
+            logger.warning(f"Failed to log SMS dispatch: {e}")
+
     # Update Service Request status to allocated
     requests_col.update_one(
         {"_id": request_doc["_id"]},

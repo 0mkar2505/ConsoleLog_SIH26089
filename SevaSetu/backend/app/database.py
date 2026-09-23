@@ -8,6 +8,15 @@ from pymongo import MongoClient, ASCENDING
 from pymongo.database import Database
 from pymongo.errors import ConnectionFailure
 
+# Configure DNS resolver to avoid Windows SRV lookup timeouts with MongoDB Atlas
+try:
+    import dns.resolver
+    _custom_resolver = dns.resolver.Resolver(configure=False)
+    _custom_resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
+    dns.resolver.default_resolver = _custom_resolver
+except Exception as _e:
+    pass
+
 from app.config import settings
 
 logger = logging.getLogger(__name__)

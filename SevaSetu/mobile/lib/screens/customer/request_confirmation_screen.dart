@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
+import '../../widgets/osm_location_map.dart';
 import 'finding_worker_screen.dart';
 
 class RequestConfirmationScreen extends StatelessWidget {
@@ -85,7 +86,17 @@ class RequestConfirmationScreen extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
+                  // Location Map Preview
+                  if (latitude != null && longitude != null) ...[
+                    OsmLocationMap(
+                      latitude: latitude!,
+                      longitude: longitude!,
+                      isInteractive: false,
+                      height: 150,
+                      showRecenterButton: false,
+                    ),
+                    const SizedBox(height: 16),
+                  ],
 
                   // Summary Details Card
                   Card(

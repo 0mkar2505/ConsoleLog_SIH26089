@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
+import '../../widgets/osm_location_map.dart';
 import 'request_confirmation_screen.dart';
 
 class RequestFormScreen extends StatefulWidget {
@@ -350,7 +351,39 @@ class _RequestFormScreenState extends State<RequestFormScreen> {
                         ),
                       ],
                     ),
+                    const SizedBox(height: 10),
+
+                    // Interactive OpenStreetMap Location Picker
+                    OsmLocationMap(
+                      latitude: _latitude,
+                      longitude: _longitude,
+                      isInteractive: true,
+                      height: 200,
+                      onLocationChanged: (newPoint) {
+                        setState(() {
+                          _latitude = newPoint.latitude;
+                          _longitude = newPoint.longitude;
+                        });
+                      },
+                    ),
                     const SizedBox(height: 8),
+
+                    // Coordinate indicator chip
+                    Row(
+                      children: [
+                        Icon(Icons.gps_fixed, size: 13, color: Colors.blue.shade700),
+                        const SizedBox(width: 4),
+                        Text(
+                          'Pinned: ${_latitude.toStringAsFixed(4)}, ${_longitude.toStringAsFixed(4)}',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.blue.shade900,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
                     TextFormField(
                       controller: _addressController,
                       decoration: InputDecoration(

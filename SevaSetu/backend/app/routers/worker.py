@@ -93,6 +93,7 @@ def get_worker_jobs(worker_id: Optional[str] = None):
         # Fetch problem description from request
         prob_desc = "Customer requested service"
         req_type = "immediate"
+        req_loc = b.get("location")
         if b.get("request_id"):
             req_doc = requests_col.find_one({
                 "$or": [
@@ -102,6 +103,16 @@ def get_worker_jobs(worker_id: Optional[str] = None):
             if req_doc:
                 prob_desc = req_doc.get("problem_description", prob_desc)
                 req_type = req_doc.get("request_type", "immediate")
+                if not req_loc:
+                    req_loc = req_doc.get("location")
+
+        lat = None
+        lng = None
+        if req_loc and isinstance(req_loc, dict) and "coordinates" in req_loc:
+            coords = req_loc["coordinates"]
+            if isinstance(coords, list) and len(coords) >= 2:
+                lng = float(coords[0])
+                lat = float(coords[1])
 
         job_entry = {
             "booking_id": b_id_str,
@@ -114,6 +125,8 @@ def get_worker_jobs(worker_id: Optional[str] = None):
             "address": b.get("address", ""),
             "landmark": b.get("landmark"),
             "directions": b.get("directions"),
+            "latitude": lat,
+            "longitude": lng,
             "status": b.get("status", "assigned"),
             "estimated_price": b.get("estimated_price", 350.0),
             "created_at": b.get("created_at")
@@ -167,6 +180,7 @@ def get_job_details(booking_id: str):
     # Fetch problem description from request
     prob_desc = "Customer requested service"
     req_type = "immediate"
+    req_loc = booking.get("location")
     if booking.get("request_id"):
         req_doc = requests_col.find_one({
             "$or": [
@@ -176,6 +190,16 @@ def get_job_details(booking_id: str):
         if req_doc:
             prob_desc = req_doc.get("problem_description", prob_desc)
             req_type = req_doc.get("request_type", "immediate")
+            if not req_loc:
+                req_loc = req_doc.get("location")
+
+    lat = None
+    lng = None
+    if req_loc and isinstance(req_loc, dict) and "coordinates" in req_loc:
+        coords = req_loc["coordinates"]
+        if isinstance(coords, list) and len(coords) >= 2:
+            lng = float(coords[0])
+            lat = float(coords[1])
 
     return {
         "booking_id": b_id_str,
@@ -189,6 +213,8 @@ def get_job_details(booking_id: str):
         "address": booking.get("address", ""),
         "landmark": booking.get("landmark"),
         "directions": booking.get("directions"),
+        "latitude": lat,
+        "longitude": lng,
         "status": booking.get("status", "assigned"),
         "estimated_price": booking.get("estimated_price", 350.0),
         "created_at": booking.get("created_at")

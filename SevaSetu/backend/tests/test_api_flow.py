@@ -31,18 +31,23 @@ ALL_COLLECTIONS = [
 
 @pytest.fixture(autouse=True)
 def mock_mongo_if_offline(monkeypatch):
-    """Ensure database is seeded for API integration tests."""
+    """Ensure database is isolated and seeded for API integration tests."""
     try:
-        real_db = get_db()
-        real_db.command("ping")
+        from app.database import get_client
+        client_instance = get_client()
+        client_instance.admin.command("ping")
+        test_db = client_instance["sevasetu_test"]
+        monkeypatch.setattr("app.database.get_db", lambda: test_db)
         for col in ALL_COLLECTIONS:
-            real_db[col].drop()
+            test_db[col].drop()
         init_db_indexes()
         seed_database()
         yield
+        for col in ALL_COLLECTIONS:
+            test_db[col].drop()
     except (ConnectionFailure, ServerSelectionTimeoutError, Exception):
         mock_client = mongomock.MongoClient()
-        mock_db = mock_client[settings.MONGODB_DATABASE]
+        mock_db = mock_client["sevasetu_test"]
 
         monkeypatch.setattr("app.database.get_client", lambda: mock_client)
         monkeypatch.setattr("app.database.get_db", lambda: mock_db)
@@ -50,6 +55,8 @@ def mock_mongo_if_offline(monkeypatch):
         init_db_indexes()
         seed_database()
         yield
+        for col in ALL_COLLECTIONS:
+            mock_db[col].drop()
 
 
 def test_services_and_auth_endpoints():
@@ -137,3 +144,40 @@ def test_end_to_end_customer_worker_flow():
     final_data = r_status.json()
     assert final_data["booking"]["status"] == "completed"
     assert final_data["current_status"] in ["completed", "fulfilled"]
+
+
+def test_low_digital_worker_sms_flow():
+    """
+    Test low-digital feature phone worker SMS dispatch offer and keypad accept reply ('1').
+    """
+    # 1. Fetch Cleaning service (Sunita Shinde has SMS/Voice access)
+    services = client.get("/api/services").json()
+    cleaning_service = next((s for s in services if s["name"] == "Cleaning"), services[0])
+
+    # 2. Customer creates request
+    req_payload = {
+        "service_id": cleaning_service["id"],
+        "problem_description": "Full apartment deep cleaning required",
+        "address": "25 LBS Marg, Kurla West, Mumbai",
+        "request_type": "scheduled",
+        "preferred_date": "2026-09-24",
+    }
+    r_create = client.post("/api/requests", json=req_payload)
+    assert r_create.status_code == 201
+
+    # 3. Simulate low-digital worker receiving SMS offer and replying '1' (ACCEPT)
+    sms_reply_payload = {
+        "sender_phone": "+919844444403",
+        "message": "1"
+    }
+    r_sms = client.post("/api/dispatch-ops/sms/inbound", json=sms_reply_payload)
+    assert r_sms.status_code == 200
+    res = r_sms.json()
+    assert res["success"] is True
+    assert res["action"] == "accepted"
+
+    # 4. Check communication audit log
+    r_logs = client.get("/api/dispatch-ops/sms/logs")
+    assert r_logs.status_code == 200
+    logs = r_logs.json()
+    assert len(logs) > 0

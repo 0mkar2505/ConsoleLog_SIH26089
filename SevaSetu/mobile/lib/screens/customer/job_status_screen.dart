@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../state/app_state.dart';
 import '../../widgets/app_bar_actions.dart';
 import '../../widgets/status_timeline.dart';
+import '../../widgets/osm_location_map.dart';
 import 'job_completed_screen.dart';
 
 class JobStatusScreen extends StatefulWidget {
@@ -140,6 +141,18 @@ class _JobStatusScreenState extends State<JobStatusScreen> {
                 ),
                 const SizedBox(height: 16),
               ],
+
+              // Live Service Location Map
+              OsmLocationMap(
+                latitude: request?.latitude ?? 19.0400,
+                longitude: request?.longitude ?? 72.8625,
+                isInteractive: false,
+                height: 180,
+                markerLabel: 'Service Address',
+                markerColor: Colors.red,
+                markerIcon: Icons.location_on,
+              ),
+              const SizedBox(height: 16),
 
               // Service & Worker Brief Card
               Card(

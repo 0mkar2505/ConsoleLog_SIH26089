@@ -61,29 +61,28 @@ ALL_COLLECTIONS = [
 @pytest.fixture(autouse=True)
 def mock_mongo_if_offline(monkeypatch):
     """
-    Fixture that attempts connection to live MongoDB.
-    If live MongoDB is unavailable, gracefully patches PyMongo MongoClient with mongomock
-    to ensure database unit tests pass cleanly without SQLite fallbacks.
+    Fixture that isolates unit tests to sevasetu_test database or mongomock
+    so that development database sevasetu_dv is never wiped.
     """
     try:
-        real_db = get_db()
-        real_db.command("ping")
-        # Live MongoDB is available
+        from app.database import get_client
+        client_instance = get_client()
+        client_instance.admin.command("ping")
+        test_db = client_instance["sevasetu_test"]
+        monkeypatch.setattr("app.database.get_db", lambda: test_db)
         for col in ALL_COLLECTIONS:
-            real_db[col].drop()
+            test_db[col].drop()
         init_db_indexes()
         yield
         for col in ALL_COLLECTIONS:
-            real_db[col].drop()
+            test_db[col].drop()
     except (ConnectionFailure, ServerSelectionTimeoutError, Exception):
-        # Live MongoDB offline; patch with in-memory mongomock Database
         mock_client = mongomock.MongoClient()
-        mock_db = mock_client[settings.MONGODB_DATABASE]
+        mock_db = mock_client["sevasetu_test"]
 
         monkeypatch.setattr("app.database.get_client", lambda: mock_client)
         monkeypatch.setattr("app.database.get_db", lambda: mock_db)
 
-        # Initialize indexes on mock db
         init_db_indexes()
         yield
         for col in ALL_COLLECTIONS:

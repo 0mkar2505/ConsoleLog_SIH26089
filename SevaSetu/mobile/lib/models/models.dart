@@ -267,6 +267,8 @@ class WorkerJob {
   final String? directions;
   final String status;
   final double estimatedPrice;
+  final double? latitude;
+  final double? longitude;
   final String? createdAt;
 
   WorkerJob({
@@ -281,12 +283,24 @@ class WorkerJob {
     required this.address,
     this.landmark,
     this.directions,
+    this.latitude,
+    this.longitude,
     required this.status,
     required this.estimatedPrice,
     this.createdAt,
   });
 
   factory WorkerJob.fromJson(Map<String, dynamic> json) {
+    double? lat = (json['latitude'] as num?)?.toDouble();
+    double? lng = (json['longitude'] as num?)?.toDouble();
+    if ((lat == null || lng == null) && json['location'] != null && json['location']['coordinates'] is List) {
+      final coords = json['location']['coordinates'] as List;
+      if (coords.length >= 2) {
+        lng = (coords[0] as num).toDouble();
+        lat = (coords[1] as num).toDouble();
+      }
+    }
+
     return WorkerJob(
       bookingId: json['booking_id']?.toString() ?? json['id']?.toString() ?? json['_id']?.toString() ?? '',
       requestId: json['request_id']?.toString(),
@@ -299,6 +313,8 @@ class WorkerJob {
       address: json['address']?.toString() ?? '',
       landmark: json['landmark']?.toString(),
       directions: json['directions']?.toString(),
+      latitude: lat,
+      longitude: lng,
       status: json['status']?.toString() ?? 'assigned',
       estimatedPrice: (json['estimated_price'] as num?)?.toDouble() ?? 350.0,
       createdAt: json['created_at']?.toString(),

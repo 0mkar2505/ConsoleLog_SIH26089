@@ -9,6 +9,8 @@ from app.routers.services import router as services_router
 from app.routers.auth import router as auth_router
 from app.routers.requests import router as requests_router
 from app.routers.worker import router as worker_router
+from app.routers.admin import router as admin_router
+from app.routers.dispatch_ops import router as dispatch_ops_router
 
 app = FastAPI(
     title="Console Log API",
@@ -30,6 +32,8 @@ app.include_router(services_router)
 app.include_router(auth_router)
 app.include_router(requests_router)
 app.include_router(worker_router)
+app.include_router(admin_router)
+app.include_router(dispatch_ops_router)
 
 
 @app.get("/")

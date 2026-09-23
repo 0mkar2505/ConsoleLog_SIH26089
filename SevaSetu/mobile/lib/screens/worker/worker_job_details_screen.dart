@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../../models/models.dart';
 import '../../state/app_state.dart';
 import '../../widgets/status_timeline.dart';
+import '../../widgets/osm_location_map.dart';
 
 class WorkerJobDetailsScreen extends StatefulWidget {
   final AppState appState;
@@ -156,6 +157,19 @@ class _WorkerJobDetailsScreenState extends State<WorkerJobDetailsScreen> {
                           ),
                         ],
                       ),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // OpenStreetMap of Customer Service Location
+                    OsmLocationMap(
+                      latitude: _currentJob.latitude ?? 19.0400,
+                      longitude: _currentJob.longitude ?? 72.8625,
+                      isInteractive: false,
+                      height: 190,
+                      markerLabel: _currentJob.customerName,
+                      markerColor: const Color(0xFF1E40AF),
+                      markerIcon: Icons.location_on,
                     ),
 
                     const SizedBox(height: 16),
