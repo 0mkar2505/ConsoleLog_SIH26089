@@ -1,236 +1,186 @@
-# SevaSetu (PS 26089)
-> **Cooperative Gig Services Platform for Household & Community Services**  
-> **Team**: Null Value  
-> **Hackathon MVP**: 12-Hour Vertical Milestone Prototype
+# Console Log (PS 26089)
+> **Cooperative Service Allocation & Dispatch Platform for Household & Community Services**  
+> **Team**: Console Log  
 
 ---
 
-## 1. Project Purpose
-**SevaSetu** is a cooperative-driven digital platform designed to empower informal gig workers and provide households with verified, fair-priced local services. Unlike predatory commercial aggregator platforms, SevaSetu operates on a cooperative model where:
-- Workers retain fair compensation with transparent cooperative fund margins.
-- Customers access verified local service providers matched by geographic proximity.
-- Cooperative administrators monitor community demand, verify credentials, and receive data-driven workforce recommendations.
+## 1. Product Concept & Vision
+
+**Console Log** is a **cooperative service allocation and dispatch platform** connecting customers with local cooperative workers while supporting multi-tiered digital access.
+
+Unlike aggregator gig marketplaces where customers select workers from a generic list, Console Log solves the core technical challenge of **allocating community workforce capacity to customer demand**.
+
+The platform intelligently considers:
+- Service & skill match
+- Worker availability & schedule
+- Worker workload
+- Geographic distance & estimated travel time
+- Verification status
+- Cooperative operational area
+- Worker digital communication method (Digital-First vs Low-Digital-Access)
+
+The platform supports both:
+1. **Immediate / On-Demand Service Requests**: Fast dispatch based on proximity, skills, and current availability (e.g., "My car broke down").
+2. **Scheduled Service Requests**: Calendar-aware booking considering worker capacity, travel buffers, and preferred customer time windows (e.g., "I need a plumber tomorrow at 5 PM").
 
 ---
 
-## 2. Platform Architecture
-
-The system is composed of **four coordinated components**:
+## 2. Four Participant Interfaces
 
 ```text
 +-------------------------------------------------------------------------------+
-|                           SEVASETU PLATFORM                                   |
+|                            CONSOLE LOG PLATFORM                               |
 +-------------------------------------------------------------------------------+
-|  1. Mobile App (Flutter)       |  3. Admin Dashboard (React + Vite)           |
-|     - Dual-role (Customer/Worker)  - Cooperative Admin & Ops Only             |
-|     - flutter_map + OSM        |     - Workforce Insights & Demand Charts     |
-|     - REST + WebSockets + FCM  |     - REST API to FastAPI                    |
-+--------------------------------+----------------------------------------------+
-                                 |
-                                 v
+|  1. Customer Interface        |  2. Digital-First Worker Interface            |
+|     - Flutter Mobile App      |     - Flutter Mobile App (Role-based)         |
+|     - Immediate & Scheduled   |     - Skills, Area, Schedule & Availability     |
+|     - Address, Landmark, Directions- Navigation & Job Status Workflow         |
++-------------------------------+-----------------------------------------------+
+|  3. Low-Digital-Access Worker |  4. Admin / Cooperative Dashboard             |
+|     - Standard SMS / Voice    |     - React + Vite Web Dashboard              |
+|     - Plaintext Job Specs     |     - Cooperative & Worker Management         |
+|     - Reply 1=ACCEPT, 2=REJECT|     - Workforce Capacity & Demand Analytics   |
++-------------------------------+-----------------------------------------------+
+                                |
+                                v
 +-------------------------------------------------------------------------------+
-|  2. Central Backend (FastAPI + SQLAlchemy + Pydantic)                         |
-|     - JWT Auth, Roles, Verification, Bookings, Haversine Geospatial Matching  |
-|     - Realtime WebSockets Hub, FCM Integration, Mock Invoicing & Payments    |
+|  CENTRAL BACKEND (FastAPI + PyMongo + Pydantic v2)                            |
+|  - Dispatch Engine            - Scheduling Engine                             |
+|  - Availability Engine        - Matching Engine                               |
+|  - Notification Service       - Communication/SMS Service (Mock/Provider)     |
+|  - Analytics Engine           - Central Database: MongoDB (PyMongo)           |
 +-------------------------------------------------------------------------------+
-         |                                              |
-         v                                              v
-+----------------------------------+   +----------------------------------------+
-|  4. Database (SQLite)            |   |  AI / Analytics Module (Pandas/sklearn)|
-|     - sevasetu.db (local dev)    |   |     - Demand forecasting               |
-|     - Reproducible seed scripts  |   |     - Workforce shortage alerts        |
-|     - Zero direct client access  |   |     - Fully modular (non-blocking)     |
-+----------------------------------+   +----------------------------------------+
 ```
 
-1. **Mobile Application (`mobile/`)**: Flutter-based multi-role mobile application serving both Customers and Workers.
-2. **Backend API (`backend/`)**: FastAPI REST and WebSocket application enforcing business rules, authentication, and geospatial proximity calculations.
-3. **Admin Web Dashboard (`dashboard/`)**: React + Vite application dedicated exclusively to cooperative oversight, worker verification, and analytics.
-4. **AI & Analytics (`ml/`)**: Modular Python forecasting and workforce capacity recommendation toolkit.
+1. **Customer Interface (`mobile/`)**:
+   - Single Flutter mobile application with role-based UI.
+   - Self-registration, address management (Lat/Lon + Human Readable Address + Landmark + Additional Directions).
+   - Immediate dispatch requests & Scheduled booking requests with flexibility windows.
+   - Live assignment tracking, notifications, history, and service ratings.
+
+2. **Digital-First Worker Interface (`mobile/`)**:
+   - Integrated into the Flutter mobile application.
+   - Manages skills, service radius, and online/offline availability.
+   - Receives job dispatches, views customer location/address, navigates via `flutter_map` + OSM, and updates job status (`en_route` -> `in_progress` -> `completed`).
+
+3. **Low-Digital-Access Worker Interface (`SMS / Voice`)**:
+   - Designed for workers without smartphones, mobile data, or app access.
+   - Operates via standard SMS text messaging on standard cellular phones.
+   - Receives complete plaintext job dispatch details (Job ID, service, customer name/phone, address, landmark, directions, time, status, description).
+   - Responds via simple SMS reply (`1 = ACCEPT`, `2 = REJECT`). Does **NOT** assume web URLs or continuous GPS.
+
+4. **Admin / Cooperative Dashboard (`dashboard/`)**:
+   - React + Vite web application reserved for cooperative administrators.
+   - Manages worker verification, skills, service catalog, booking monitoring, community capacity, and demand analytics.
 
 ---
 
-## 3. Repository Structure
+## 3. Core Backend Architecture
+
+The backend (Python / FastAPI / PyMongo / Pydantic v2) acts as the central source of truth and houses seven core logical engines:
+- **Dispatch Engine**: Handles immediate, real-time service requests.
+- **Scheduling Engine**: Handles future calendar bookings & time-window flexibilities.
+- **Availability Engine**: Evaluates true worker schedule capacity ("Can this community satisfy this request?").
+- **Matching Engine**: Multi-factor worker matching algorithm.
+- **Notification Service**: WebSockets for live in-app state synchronizing and FCM for background alerts.
+- **Communication / SMS Service**: SMS gateway integration with local mock fallback.
+- **Analytics Engine**: Demand forecasting and labor shortage advisory insights for cooperatives.
+
+MongoDB (via PyMongo) is the sole database persistence layer. Neither Flutter nor React directly queries MongoDB.
+
+---
+
+## 4. Repository Structure
 
 ```text
 SevaSetu/
-├── AGENTS.md                  # Project constitution & development rules
-├── TASKS.md                   # Vertical milestone roadmap and status tracker
+├── AGENTS.md                  # Project constitution & architecture specifications
+├── TASKS.md                   # Vertical roadmap and milestone status log
 ├── README.md                  # System overview and setup guide (this file)
-├── .gitignore                 # Version control exclusions
 ├── .env.example               # Environment variables template
 │
-├── mobile/                    # Component 1: Flutter mobile app (Customer + Worker)
+├── mobile/                    # Component 1 & 2: Flutter Mobile App (Customer + Worker)
 │   ├── pubspec.yaml
 │   ├── lib/
-│   │   └── main.dart
+│   │   ├── main.dart
+│   │   ├── config/            # App constants, routes, theme
+│   │   ├── models/            # Customer & Worker models
+│   │   ├── services/          # REST API, WebSocket, and FCM services
+│   │   └── screens/           # Customer & Digital Worker screens
 │   └── test/
 │
-├── backend/                   # Component 2: FastAPI central backend
+├── backend/                   # Central FastAPI Backend API
 │   ├── requirements.txt
 │   ├── app/
-│   │   ├── main.py            # FastAPI entry point & health check
-│   │   ├── database.py        # SQLAlchemy SQLite engine
-│   │   ├── models/            # SQLAlchemy database models
-│   │   ├── schemas/           # Pydantic schemas
+│   │   ├── main.py            # FastAPI entry point & WebSocket hub
+│   │   ├── database.py        # PyMongo client & index initialization
+│   │   ├── seed.py            # Idempotent MongoDB seed data script
+│   │   ├── models/            # Document schema definitions
+│   │   ├── schemas/           # Pydantic validation schemas
 │   │   ├── routers/           # API routes
-│   │   ├── services/          # Haversine matching & core logic
-│   │   ├── utils/             # Helpers & security
-│   │   └── seed.py            # Reproducible database seed script
+│   │   └── services/          # Core logical engines (Dispatch, Scheduling, SMS, etc.)
 │   └── tests/
 │
-├── dashboard/                 # Component 3: React Admin Dashboard (Vite)
+├── dashboard/                 # Component 4: React Admin Web Dashboard (Vite)
 │   ├── package.json
 │   ├── vite.config.js
-│   ├── index.html
-│   └── src/
-│       ├── App.jsx
-│       ├── main.jsx
-│       └── index.css
+│   └── src/                   # Cooperative management & analytics UI
 │
-├── ml/                        # Component 4: AI & Analytics module
-│   ├── data/                  # Synthetic training datasets
-│   ├── models/                # Trained model artifacts
-│   ├── training/              # Training scripts
-│   ├── forecasting/           # Demand & workforce heuristics
-│   └── requirements.txt
+├── ml/                        # Intelligence & Advisory Analytics Module
+│   └── forecasting/           # Demand forecasting & capacity heuristics
 │
-├── data/                      # Shared seed JSONs and sample files
-└── docs/                      # Technical specifications and architecture documentation
+└── data/                      # Shared seed JSONs and datasets
 ```
 
 ---
 
-## 4. Required Software & Runtime Versions
-
-To build and run the complete platform, ensure your development machine has the following tools installed:
+## 5. Required Software & Setup
 
 | Tool | Recommended Version | Verification Command |
 | :--- | :--- | :--- |
-| **Python** | `3.12.x` | `py -3.12 --version` or `python --version` |
-| **Node.js** | `22.x` (or current LTS) | `node -v` |
-| **npm** | `10.x+` or `11.x+` | `npm -v` |
-| **Flutter** | `3.24.x+` (stable channel) | `flutter --version` |
-| **Dart** | Bundled with Flutter (`3.5.x+`) | `dart --version` |
-| **Git** | `2.x+` | `git --version` |
+| **Python** | `3.12.x` | `python --version` |
+| **Node.js** | `22.x` (or LTS) | `node -v` |
+| **npm** | `10.x+` / `11.x+` | `npm -v` |
+| **Flutter** | `3.24.x+` | `flutter --version` |
+| **MongoDB** | `6.x` / `7.x` | Service running on port `27017` |
 
----
-
-## 5. Clone & Setup Guide (Fresh Windows Machine)
-
-### Step 0: Clone the Repository
-```powershell
-git clone https://github.com/0mkar2505/ConsoleLog_SIH26089.git
-cd ConsoleLog_SIH26089\SevaSetu
-```
-
-### Step 1: Environment Configuration
-Copy the template configuration file:
+### Environment Configuration
 ```powershell
 copy .env.example .env
 ```
-*(Do not commit your `.env` file to Git.)*
+
+### Running Backend (FastAPI)
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+uvicorn app.main:app --reload --port 8000
+```
+
+### Seeding Database
+```powershell
+python -m app.seed
+```
+
+### Running Admin Dashboard (React + Vite)
+```powershell
+cd dashboard
+npm install
+npm run dev
+```
+
+### Running Mobile App (Flutter)
+```powershell
+cd mobile
+flutter pub get
+flutter run -d windows  # or -d chrome / -d android
+```
 
 ---
 
-## 6. Component Setup & Execution
-
-### A. Backend (FastAPI) Setup & Run
-
-1. Navigate to the `backend/` directory:
-   ```powershell
-   cd backend
-   ```
-2. Create and activate a dedicated Python 3.12 virtual environment:
-   ```powershell
-   py -3.12 -m venv venv
-   .\venv\Scripts\Activate.ps1
-   ```
-3. Install backend dependencies:
-   ```powershell
-   pip install --upgrade pip
-   pip install -r requirements.txt
-   ```
-4. Start the FastAPI development server:
-   ```powershell
-   uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
-   ```
-5. Verify health endpoint in your browser or terminal:
-   - **Healthcheck**: [http://127.0.0.1:8000/api/health](http://127.0.0.1:8000/api/health)
-   - **Interactive Swagger Docs**: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
-
----
-
-### B. Dashboard (React + Vite) Setup & Run
-
-1. Navigate to the `dashboard/` directory:
-   ```powershell
-   cd ..\dashboard
-   ```
-2. Install npm dependencies:
-   ```powershell
-   npm install
-   ```
-3. Run the Vite development server:
-   ```powershell
-   npm run dev
-   ```
-4. Access the dashboard at:
-   - [http://localhost:5173](http://localhost:5173)
-5. To test a production build:
-   ```powershell
-   npm run build
-   ```
-
----
-
-### C. Mobile App (Flutter) Setup & Run
-
-1. Navigate to the `mobile/` directory:
-   ```powershell
-   cd ..\mobile
-   ```
-2. Fetch Flutter packages:
-   ```powershell
-   flutter pub get
-   ```
-3. Run code analysis and widget smoke tests:
-   ```powershell
-   flutter analyze
-   flutter test
-   ```
-4. Launch the application:
-   - On Windows desktop (for rapid UI development):
-     ```powershell
-     flutter run -d windows
-     ```
-   - On an Android Emulator / physical device:
-     ```powershell
-     flutter run -d android
-     ```
-   - In Chrome (web preview):
-     ```powershell
-     flutter run -d chrome
-     ```
-
----
-
-### D. AI & Analytics Module (`ml/`) Setup
-
-1. Navigate to the `ml/` directory:
-   ```powershell
-   cd ..\ml
-   ```
-2. Create and activate a virtual environment (or use backend's environment):
-   ```powershell
-   py -3.12 -m venv venv
-   .\venv\Scripts\Activate.ps1
-   pip install -r requirements.txt
-   ```
-
----
-
-## 7. Development Guidelines & Constraints
-- **Database**: SQLite (`sevasetu.db`) with automated schema generation and reproducible `seed.py`. Never commit database files to Git.
-- **Security**: Mocked payments; JWT authentication; no hardcoded credentials.
-- **Prohibitions**: Strictly no real payment gateways, no external paid map APIs, and no microservices.
+## 6. Key Constraints
+- **Database**: MongoDB with PyMongo only. No SQLite, SQLAlchemy, or PostgreSQL.
+- **Mapping**: `flutter_map` + OpenStreetMap (No paid Google Maps).
+- **Communication**: FCM/WebSockets for digital workers; SMS gateway (with mock mode) for low-digital workers.
+- **Payments**: Fully mocked for hackathon MVP.

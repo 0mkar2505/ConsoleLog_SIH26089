@@ -1,11 +1,34 @@
 import 'package:flutter/material.dart';
+import 'state/app_state.dart';
+import 'screens/customer/customer_home_screen.dart';
+import 'screens/worker/worker_home_screen.dart';
 
 void main() {
+  WidgetsFlutterBinding.ensureInitialized();
   runApp(const SevaSetuApp());
 }
 
-class SevaSetuApp extends StatelessWidget {
+class SevaSetuApp extends StatefulWidget {
   const SevaSetuApp({super.key});
+
+  @override
+  State<SevaSetuApp> createState() => _SevaSetuAppState();
+}
+
+class _SevaSetuAppState extends State<SevaSetuApp> {
+  late final AppState _appState;
+
+  @override
+  void initState() {
+    super.initState();
+    _appState = AppState();
+  }
+
+  @override
+  void dispose() {
+    _appState.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,80 +38,74 @@ class SevaSetuApp extends StatelessWidget {
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: const Color(0xFF1E40AF),
+          primary: const Color(0xFF1E40AF),
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-      ),
-      home: const AppShellScreen(),
-    );
-  }
-}
-
-class AppShellScreen extends StatelessWidget {
-  const AppShellScreen({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text(
-          'SevaSetu',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        scaffoldBackgroundColor: const Color(0xFFF8FAFC),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          foregroundColor: Color(0xFF0F172A),
+          elevation: 0.5,
         ),
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        centerTitle: true,
-      ),
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              Icon(
-                Icons.handshake_outlined,
-                size: 72,
-                color: Theme.of(context).colorScheme.primary,
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'SevaSetu Mobile Application',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Cooperative Gig Services Platform (PS 26089)',
-                style: TextStyle(fontSize: 14, color: Colors.grey),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 24),
-              Card(
-                elevation: 1,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 12.0,
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: const [
-                      Icon(Icons.check_circle, color: Colors.green, size: 20),
-                      SizedBox(width: 8),
-                      Text(
-                        'Application Shell Active',
-                        style: TextStyle(
-                          fontWeight: FontWeight.w600,
-                          color: Colors.green,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+        cardTheme: CardThemeData(
+          color: Colors.white,
+          elevation: 1,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
           ),
         ),
       ),
+      home: ListenableBuilder(
+        listenable: _appState,
+        builder: (context, _) => _buildHomeBody(),
+      ),
     );
+  }
+
+  Widget _buildHomeBody() {
+    if (_appState.isLoading && _appState.services.isEmpty) {
+      return Scaffold(
+        backgroundColor: Colors.white,
+        body: Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF1E40AF).withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.handshake_rounded,
+                  size: 36,
+                  color: Color(0xFF1E40AF),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text(
+                'Connecting to SevaSetu...',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 6),
+              const Text(
+                'Fetching services & cooperative workers from MongoDB Atlas',
+                style: TextStyle(fontSize: 12, color: Colors.grey),
+              ),
+              const SizedBox(height: 20),
+              const CircularProgressIndicator(),
+            ],
+          ),
+        ),
+      );
+    }
+
+    if (_appState.currentRole == 'worker') {
+      return WorkerHomeScreen(appState: _appState);
+    } else {
+      return CustomerHomeScreen(appState: _appState);
+    }
   }
 }

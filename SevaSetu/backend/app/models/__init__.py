@@ -1,4 +1,6 @@
 """
-SQLAlchemy database models for SevaSetu.
-To be populated in Milestone 2: Database.
+MongoDB database models & document helpers package for Console Log.
 """
+from app.models.document_helpers import clean_doc_id, str_to_object_id
+
+__all__ = ["clean_doc_id", "str_to_object_id"]

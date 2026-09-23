@@ -32,7 +32,7 @@ export default function App() {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e5e7eb', paddingBottom: '1rem' }}>
         <div>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', color: '#111827' }}>SevaSetu Admin Dashboard</h1>
-          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>PS 26089 — Cooperative Gig Services Platform | Team Null Value</p>
+          <p style={{ fontSize: '0.875rem', color: '#6b7280' }}>PS 26089 — Cooperative Gig Services Platform | Team Console Log</p>
         </div>
         <nav style={{ display: 'flex', gap: '1rem' }}>
           <Link to="/" style={{ color: '#2563eb', textDecoration: 'none', fontWeight: 500 }}>Home</Link>

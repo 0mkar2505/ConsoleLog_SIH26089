@@ -1,17 +1,22 @@
 """
-FastAPI application entrypoint for SevaSetu.
-Provides initial healthcheck and foundation for REST and WebSocket APIs.
+FastAPI application entrypoint for Console Log platform.
+Provides REST APIs for Customer, Worker, Dispatch Engine, Services, and Auth.
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from app.routers.services import router as services_router
+from app.routers.auth import router as auth_router
+from app.routers.requests import router as requests_router
+from app.routers.worker import router as worker_router
+
 app = FastAPI(
-    title="SevaSetu API",
-    description="Cooperative Gig Services Platform for Household & Community Services (PS 26089)",
-    version="0.1.0",
+    title="Console Log API",
+    description="Cooperative Service Allocation & Dispatch Platform API",
+    version="0.2.0",
 )
 
-# Enable CORS for local development across dashboard and mobile
+# Enable CORS for local development across dashboard and mobile apps
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -20,11 +25,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Register API Routers
+app.include_router(services_router)
+app.include_router(auth_router)
+app.include_router(requests_router)
+app.include_router(worker_router)
+
 
 @app.get("/")
 def root():
     return {
-        "message": "Welcome to SevaSetu API",
+        "message": "Welcome to Console Log API",
         "docs_url": "/docs",
         "health_check": "/api/health",
         "status": "online",
@@ -36,7 +47,7 @@ def health_check():
     """Healthcheck endpoint to verify API service status."""
     return {
         "status": "healthy",
-        "service": "sevasetu-backend",
-        "version": "0.1.0",
-        "message": "SevaSetu FastAPI Backend is running successfully."
+        "service": "consolelog-backend",
+        "version": "0.2.0",
+        "message": "Console Log FastAPI Backend is running successfully."
     }

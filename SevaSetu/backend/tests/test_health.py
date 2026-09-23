@@ -19,5 +19,5 @@ def test_health_check_endpoint():
     assert response.status_code == 200
     data = response.json()
     assert data["status"] == "healthy"
-    assert data["service"] == "sevasetu-backend"
+    assert data["service"] in ["sevasetu-backend", "consolelog-backend"]
     assert "running successfully" in data["message"]
